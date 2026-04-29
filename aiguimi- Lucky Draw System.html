@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Lucky Draw System | Professional Projection Version</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Microsoft YaHei', 'Poppins', system-ui, sans-serif;
+            background: radial-gradient(circle at 20% 30%, #ffb347, #ff4d4d);
+            overflow-x: hidden;
+            transition: all 0.3s;
+        }
+        .custom-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background-size: cover; background-position: center; opacity: 0.94; display: none; }
+        .default-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -3; background: radial-gradient(circle at 20% 30%, #ffb347, #ff4d4d); }
+        
+        .app-wrapper {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            gap: 40px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        body.fullscreen-mode .control-area { display: none; }
+        body.fullscreen-mode .app-wrapper { max-width: 100%; margin: 0; gap: 0; }
+        body.fullscreen-mode .main-area { border-radius: 0; padding: 20px; }
+        body.fullscreen-mode .fullscreen-btn { position: fixed; top: 20px; right: 20px; z-index: 1001; opacity: 0.7; }
+        body.fullscreen-mode .fullscreen-btn:hover { opacity: 1; }
+        
+        .main-area {
+            flex: 5;
+            background: rgba(255, 245, 220, 0.92);
+            backdrop-filter: blur(4px);
+            border-radius: 60px;
+            padding: 30px;
+            border: 2px solid #ffd966;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .lottery-stage {
+            text-align: center;
+            background: rgba(255, 235, 190, 0.7);
+            border-radius: 64px;
+            padding: 30px 20px;
+            border: 2px solid #ffcc77;
+        }
+        .prize-header {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #c0392b;
+            text-shadow: 2px 2px 0 #ffdfa5;
+            background: #fff0ccaa;
+            display: inline-block;
+            padding: 12px 48px;
+            border-radius: 80px;
+            margin-bottom: 20px;
+        }
+        .rolling-box {
+            min-height: 280px;
+            margin: 20px 0;
+            background: #fff4e0dd;
+            border-radius: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 20px rgba(255,100,0,0.2);
+        }
+        .winner-name {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 3px 3px 0 #fff2b5;
+            margin-bottom: 15px;
+        }
+        .winner-prize {
+            font-size: 2.2rem;
+            background: #ffd966dd;
+            display: inline-block;
+            padding: 10px 35px;
+            border-radius: 80px;
+            color: #b64926;
+        }
+        .draw-btn {
+            background: linear-gradient(120deg, #ffa500, #ff4d00);
+            font-size: 1.8rem;
+            padding: 14px 48px;
+            border-radius: 80px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            box-shadow: 0 6px 0 #a13300;
+            border: none;
+            cursor: pointer;
+            color: #fff7e8;
+        }
+        .stage-message {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            color: #d45a1a;
+            background: #ffffe0cc;
+            display: inline-block;
+            padding: 6px 24px;
+            border-radius: 40px;
+            font-weight: 500;
+        }
+        .fullscreen-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #ffaa44;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+        }
+        .control-area {
+            width: 380px;
+            background: rgba(255, 248, 225, 0.96);
+            backdrop-filter: blur(8px);
+            border-radius: 48px;
+            border-left: 2px solid #ffcc66;
+            overflow-y: auto;
+            max-height: 85vh;
+            transition: all 0.3s;
+        }
+        .control-inner { padding: 20px 16px; }
+        .card {
+            background: rgba(255, 250, 235, 0.9);
+            border-radius: 32px;
+            padding: 16px;
+            margin-bottom: 20px;
+            border: 1px solid #ffd966;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #d42e00, #f09819);
+            -webkit-background-clip: text;
+            background-clip: text;
+            border-left: 5px solid #ffaa33;
+            padding-left: 12px;
+            margin-bottom: 12px;
+        }
+        textarea, select, input {
+            background: #fff3e0;
+            border: 1px solid #ffbb66;
+            border-radius: 32px;
+            padding: 8px 12px;
+            width: 100%;
+            margin-top: 6px;
+        }
+        button {
+            background: #ffaa44;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 32px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button.secondary { background: #dd9955; }
+        .prize-item {
+            background: #ffefcf;
+            border-radius: 32px;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .prize-item input { width: 100px; margin: 0; }
+        .prize-item input.prize-count { width: 65px; }
+        .voice-switch {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffefcf;
+            border-radius: 48px;
+            padding: 8px 16px;
+            margin-bottom: 18px;
+        }
+        .toggle {
+            width: 50px;
+            height: 26px;
+            background: #ccc;
+            border-radius: 40px;
+            position: relative;
+            cursor: pointer;
+        }
+        .toggle.active { background: #ff8c42; }
+        .toggle::after {
+            content: "";
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            transition: 0.2s;
+        }
+        .toggle.active::after { left: 25px; }
+        .inline-buttons { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+        .stats-info {
+            background: #ffeecc;
+            border-radius: 28px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            text-align: center;
+            color: #b64926;
+            font-weight: bold;
+        }
+        .assign-item {
+            background: #ffefcf;
+            border-radius: 28px;
+            padding: 6px 12px;
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        .assign-del {
+            background: #dd7766;
+            border-radius: 30px;
+            padding: 2px 10px;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        .marquee-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(12px);
+            border-top: 2px solid #ffcc66;
+            padding: 10px 0;
+            height: 64px;
+            overflow: hidden;
+            white-space: nowrap;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+        .marquee-track {
+            display: inline-block;
+            white-space: nowrap;
+            animation: scrollMarquee 24s linear infinite;
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ffefb0;
+            padding-left: 0;
+            will-change: transform;
+        }
+        .marquee-track span {
+            margin-right: 50px;
+            background: rgba(255,80,40,0.9);
+            padding: 5px 28px;
+            border-radius: 48px;
+            display: inline-block;
+            box-shadow: 0 0 6px rgba(255,215,0,0.5);
+        }
+        @keyframes scrollMarquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .glow { animation: glowFlash 0.4s ease; }
+        @keyframes glowFlash { 50% { text-shadow: 0 0 20px #ffaa33; } }
+        .order-desc { font-size: 0.7rem; color: #b45f1b; margin-top: 4px; text-align: center; }
+        .drag-handle { cursor: move; margin-right: 6px; font-size: 0.8rem; }
+        .order-selector { margin: 12px 0; display: flex; gap: 16px; justify-content: center; background: #ffe3c2; padding: 8px; border-radius: 48px; }
+        .order-selector label { cursor: pointer; font-weight: bold; }
+
+        .logo-corner {
+            position: absolute;
+            top: 35px;
+            left: 80px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .logo-img {
+            height: 140px;
+            width: auto;
+            display: block;
+            border-radius: 12px;
+        }
+    </style>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<div class="default-bg"></div>
+<div class="custom-bg" id="customBg"></div>
+<button class="fullscreen-btn" id="fullscreenBtn">🖥️ Fullscreen Mode</button>
+
+<div class="app-wrapper">
+    <div class="main-area">
+        <div class="logo-corner">
+            <img src="logo.jpg" alt="AI GUIMI Logo" class="logo-img">
+        </div>
+
+        <!-- Support Us Button & Donation Modal -->
+        <style>
+        .support-btn {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: #ffcc00;
+            color: #333;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 9999;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            margin: 10% auto;
+        }
+        .modal-close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+        .donate-text {
+            margin: 15px 0;
+            line-height: 1.6;
+            color: #333;
+        }
+        .donate-qr {
+            width: 200px;
+            height: auto;
+            margin: 15px auto;
+            display: block;
+            border-radius: 10px;
+        }
+        </style>
+
+        <button class="support-btn" id="supportBtn">💛 Support Us</button>
+        <div class="modal" id="supportModal">
+            <div class="modal-content">
+                <span class="modal-close" id="modalClose">&times;</span>
+                <h3>💛 Support AI GUIMI Project 💛</h3>
+                <div class="donate-text">
+                    AI GUIMI is an outstanding project built by a visionary team. We develop free tools to make your life easier. We hope this lucky draw system brings you value. If you find it useful, you can support us. We accept Bitcoin, ETH, SOL, USDT, USDC and other major cryptocurrencies. Thank you!
+                </div>
+                <img src="bian.png" alt="Binance Payment QR" class="donate-qr">
+                <p style="font-size:0.9rem; color:#666; margin-top:10px;">Scan with Binance App to pay</p>
+            </div>
+        </div>
+
+        <script>
+        document.getElementById('supportBtn').addEventListener('click', function() {
+            document.getElementById('supportModal').style.display = 'block';
+        });
+        document.getElementById('modalClose').addEventListener('click', function() {
+            document.getElementById('supportModal').style.display = 'none';
+        });
+        window.addEventListener('click', function(e) {
+            if (e.target == document.getElementById('supportModal')) {
+                document.getElementById('supportModal').style.display = 'none';
+            }
+        });
+        </script>
+
+        <div class="lottery-stage">
+            <div class="prize-header" id="prizeHeader">🏆 Lucky Draw 🏆</div>
+            <div class="rolling-box">
+                <div style="text-align:center; width:100%">
+                    <div id="winnerName" class="winner-name">✨ Lucky Winner ✨</div>
+                    <div id="winnerPrize" class="winner-prize"></div>
+                </div>
+            </div>
+            <button id="drawBtn" class="draw-btn">🎤 Start Draw 🎤</button>
+            <div id="stageMessage" class="stage-message">✨ Press Space / Enter or click to start ✨</div>
+        </div>
+    </div>
+
+    <div class="control-area">
+        <div class="control-inner">
+            <div class="voice-switch">
+                <span>🔊 Voice Announcement</span>
+                <div id="voiceToggle" class="toggle active"></div>
+            </div>
+            <div class="stats-info" id="statsInfo">Remaining: -- / --</div>
+
+            <div class="card">
+                <div class="section-title">🎨 Background</div>
+                <input type="file" id="bgFile" accept="image/*" style="display:none">
+                <div class="inline-buttons">
+                    <button id="selectBgBtn">Select Image</button>
+                    <button id="applyBgBtn">Apply</button>
+                    <button id="resetBgBtn" class="secondary">Default</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">👥 Member List</div>
+                <textarea id="memberTxt" rows="2" placeholder="One name per line or separated by space"></textarea>
+                <div class="inline-buttons">
+                    <button id="updateMembers">Update Members</button>
+                    <button id="exampleBtn" class="secondary">Example</button>
+                    <button id="clearMembers" class="secondary">Clear</button>
+                    <label class="secondary" style="padding:6px 12px; cursor:pointer">📎 Upload Excel<input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none"></label>
+                </div>
+                <div style="font-size:12px; color:red; font-weight:bold; margin-top:4px;">⚠ After uploading Excel, click [Apply & Reset] to take effect</div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">🚫 Blacklist</div>
+                <textarea id="blacklistTxt" rows="2" placeholder="Names separated by space or new line"></textarea>
+                <div class="inline-buttons">
+                    <button id="applyBlacklist">Apply</button>
+                    <button id="clearBlacklist" class="secondary">Clear</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">🎯 Assign Winner</div>
+                <select id="assignSelect"></select>
+                <input id="assignPrize" placeholder="Prize Name (e.g. Grand Prize)">
+                <button id="doAssign" style="width:100%; margin-top:8px">📌 Assign</button>
+                <div id="assignListContainer" style="margin-top:10px; max-height:120px; overflow-y:auto;"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">🏅 Prize Manager</div>
+                <div class="order-selector">
+                    <label><input type="radio" name="orderMode" value="desc" checked> 🏆 High → Low</label>
+                    <label><input type="radio" name="orderMode" value="asc"> 🎁 Low → High</label>
+                </div>
+                <div class="inline-buttons">
+                    <button id="addTempPrizeBtn" class="secondary">➕ Add Prize</button>
+                    <button id="genDefaultBtn" class="secondary">Prize Preset</button>
+                    <input type="number" id="levelCount" min="1" max="20" value="5" style="width:70px; margin-left:4px;">
+                </div>
+                <div id="prizeListContainer" style="margin-top:8px;"></div>
+                <div class="order-desc">💡 Drag to reorder prizes</div>
+                <div class="inline-buttons" style="margin-top:12px; justify-content:center;">
+                    <button id="applyOrderBtn">✨ Apply & Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="background: rgba(255, 245, 200, 0.95); text-align: center; padding: 12px 20px; font-size: 1.8rem; font-weight: bold; color: #b64926; border-top: 2px solid #ff6666; border-bottom: 1px solid #ff6666; letter-spacing: 2px;">
+    💖 AI GUIMI · AI for You · Silicon Civilization 💖
+</div>
+
+<div class="marquee-fixed">
+    <div class="marquee-track" id="marqueeTrack">
+        <span>🎉 Good Luck & Stay Tuned 🎉</span>
+    </div>
+</div>
+
+<script>
+    let members = [];
+    let blackSet = new Set();
+    let winnersLog = [];
+    let prizes = [];
+    let baseOrder = [];
+    let curPrizeIdx = 0;
+    let curRemain = 0;
+    let isComplete = false;
+    let assignMap = new Map();
+    let speech = true;
+    let rollTimer = null;
+    let isFullscreen = false;
+    const winnerNameDiv = document.getElementById('winnerName');
+    const winnerPrizeDiv = document.getElementById('winnerPrize');
+    const prizeHeader = document.getElementById('prizeHeader');
+    const stageMessage = document.getElementById('stageMessage');
+    const statsInfo = document.getElementById('statsInfo');
+    const memberTxt = document.getElementById('memberTxt');
+    const blacklistTxt = document.getElementById('blacklistTxt');
+    const assignSelect = document.getElementById('assignSelect');
+    const assignPrizeInput = document.getElementById('assignPrize');
+    const assignListContainer = document.getElementById('assignListContainer');
+    const prizeListContainer = document.getElementById('prizeListContainer');
+    const marqueeTrack = document.getElementById('marqueeTrack');
+    const voiceToggle = document.getElementById('voiceToggle');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const orderModeRadios = document.querySelectorAll('input[name="orderMode"]');
+
+    function toggleFullscreen() {
+        isFullscreen = !isFullscreen;
+        if(isFullscreen) {
+            document.body.classList.add('fullscreen-mode');
+            fullscreenBtn.innerHTML = '🔧 Exit Fullscreen';
+            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+        } else {
+            document.body.classList.remove('fullscreen-mode');
+            fullscreenBtn.innerHTML = '🖥️ Fullscreen Mode';
+            if(document.exitFullscreen) document.exitFullscreen();
+        }
+    }
+    fullscreenBtn.onclick = toggleFullscreen;
+    document.addEventListener('fullscreenchange', () => {
+        if(!document.fullscreenElement && isFullscreen) {
+            isFullscreen = false;
+            document.body.classList.remove('fullscreen-mode');
+            fullscreenBtn.innerHTML = '🖥️ Fullscreen Mode';
+        }
+    });
+
+    function normalizePrizeName(input) {
+        let s = input.trim();
+        let map = {
+            'Grand Prize':'Grand Prize','First Prize':'First Prize','1st Prize':'First Prize',
+            'Second Prize':'Second Prize','2nd Prize':'Second Prize','Third Prize':'Third Prize','3rd Prize':'Third Prize',
+            'Fourth Prize':'Fourth Prize','4th Prize':'Fourth Prize','Fifth Prize':'Fifth Prize','5th Prize':'Fifth Prize'
+        };
+        return map[s] || s;
+    }
+
+    function getFinalOrder() {
+        if(baseOrder.length === 0) return [];
+        let order = [...baseOrder];
+        let mode = document.querySelector('input[name="orderMode"]:checked').value;
+        if(mode === 'asc') order.reverse();
+        return order;
+    }
+
+    function parseNames(str) { return [...new Set(str.split(/\s+/).filter(n=>n.trim()))]; }
+
+    function updateStatsUI() {
+        const total = members.filter(m => !m.bl).length;
+        const left = members.filter(m => !m.win && !m.bl).length;
+        statsInfo.innerText = `Remaining: ${left} / ${total}`;
+    }
+
+    function updateMarquee() {
+        if(!winnersLog.length) { marqueeTrack.innerHTML = '<span>🎉 Good Luck & Stay Tuned 🎉</span><span>🎉 Good Luck & Stay Tuned 🎉</span>'; return; }
+        let items = [];
+        winnersLog.forEach(log => { log.winners.forEach(w => items.push(`<span>🏆 ${w} won ${log.prize} 🏆</span>`)); });
+        marqueeTrack.innerHTML = items.join('') + items.join('');
+    }
+
+    function speak(t) { if(speech && t) { let u = new SpeechSynthesisUtterance(t); u.lang='en-US'; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); } }
+
+    function refreshAssignSelect() {
+        let assigned = new Set(assignMap.keys());
+        let opts = members.filter(m => !m.win && !m.bl && !assigned.has(m.name));
+        assignSelect.innerHTML = opts.length ? opts.map(m=>`<option value="${m.name}">${m.name}</option>`).join('') : '<option>--No Available--</option>';
+    }
+
+    function getAssignedCountForPrize(pn) { let c=0; for(let [n,p] of assignMap) if(p===pn) c++; return c; }
+
+    function renderAssignList() {
+        if(assignMap.size===0) { assignListContainer.innerHTML='<div style="font-size:11px;color:#b45f1b;">No assigned winners</div>'; return; }
+        let h=''; for(let [n,p] of assignMap) h+=`<div class="assign-item"><span><strong>${n}</strong> → ${p}</span><span class="assign-del" data-name="${n}">🗑️ Remove</span></div>`;
+        assignListContainer.innerHTML=h;
+        document.querySelectorAll('.assign-del').forEach(el=>{
+            el.onclick=()=>{ let n=el.dataset.name; if(n&&assignMap.has(n)){ assignMap.delete(n); renderAssignList(); refreshAssignSelect(); } };
+        });
+    }
+
+    function renderPrizeManager() {
+        if(!prizes.length){ prizeListContainer.innerHTML='<div style="color:#b45f1b;text-align:center;">No prizes yet</div>'; return; }
+        let h='<div id="prizeSortableList">';
+        prizes.forEach((p,idx)=>{
+            let c=getAssignedCountForPrize(p.name);
+            let hint=c>0?` (Assigned ${c}/${p.count})`:' ';
+            h+=`<div class="prize-item" data-idx="${idx}" draggable="true">
+            <span class="drag-handle">⋮⋮</span>
+            <input type="text" value="${escapeHtml(p.name)}" data-idx="${idx}" class="prize-name-inp" style="width:100px;">
+            <input type="number" value="${p.count}" min="1" data-idx="${idx}" class="prize-count-inp" style="width:65px;">
+            <span style="font-size:0.7rem;color:#b45f1b;">${hint}</span>
+            <button class="secondary" data-idx="${idx}" style="background:#cc8866;">✖</button>
+            </div>`;
+        });
+        h+='</div>'; prizeListContainer.innerHTML=h;
+        document.querySelectorAll('.prize-name-inp').forEach(i=>{
+            i.onchange=()=>{ let x=parseInt(i.dataset.idx); if(prizes[x]){ prizes[x].name=i.value; renderPrizeManager(); } };
+        });
+        document.querySelectorAll('.prize-count-inp').forEach(i=>{
+            i.onchange=()=>{ let x=parseInt(i.dataset.idx); if(prizes[x]){ prizes[x].count=Math.max(1,parseInt(i.value)||1); renderPrizeManager(); updateStatsUI(); } };
+        });
+        document.querySelectorAll('.prize-item button:last-child').forEach((btn,idx)=>{
+            btn.onclick=()=>{ if(prizes.length<=1)return; prizes.splice(idx,1); baseOrder=prizes.map((_,i)=>i); renderPrizeManager(); };
+        });
+        let items=document.querySelectorAll('#prizeSortableList .prize-item');
+        items.forEach(it=>{
+            it.ondragstart=(e)=>{ e.dataTransfer.setData('text/plain', it.dataset.idx); };
+            it.ondragover=(e)=>{ e.preventDefault(); };
+            it.ondrop=(e)=>{
+                e.preventDefault();
+                let fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                let toIdx = parseInt(it.dataset.idx);
+                if(isNaN(fromIdx)||isNaN(toIdx)||fromIdx===toIdx) return;
+                let moved = prizes[fromIdx];
+                prizes.splice(fromIdx,1);
+                let newTo = fromIdx < toIdx ? toIdx-1 : toIdx;
+                prizes.splice(newTo,0,moved);
+                baseOrder = prizes.map((_,i)=>i);
+                renderPrizeManager();
+                updatePrizeHeader();
+            };
+        });
+    }
+
+    function getAvailableForPrize(pn) {
+        return members.filter(m=>{
+            if(m.win)return false; if(m.bl)return false;
+            if(assignMap.has(m.name))return assignMap.get(m.name)===pn;
+            return true;
+        });
+    }
+
+    function updatePrizeHeader() {
+        let ord=getFinalOrder();
+        if(isComplete||curPrizeIdx>=ord.length){
+            prizeHeader.innerHTML='🏁 Draw Completed 🏁';
+            stageMessage.innerHTML='✨ Thank you for joining ✨'; return;
+        }
+        let p=prizes[ord[curPrizeIdx]];
+        prizeHeader.innerHTML=`🏆 Drawing: ${p.name} 🏆`;
+        stageMessage.innerHTML='✨ Press Space / Enter or click to start ✨';
+    }
+
+    function resetLottery() {
+        members.forEach(m=>{ m.win=false; m.prize=null; });
+        winnersLog=[];
+        let ord=getFinalOrder();
+        curPrizeIdx=0;
+        curRemain=ord.length? prizes[ord[0]]?.count||0 :0;
+        isComplete=false;
+        updateMarquee(); updatePrizeHeader();
+        winnerNameDiv.innerHTML='✨ Lucky Winner ✨'; winnerPrizeDiv.innerHTML='';
+        updateStatsUI(); refreshAssignSelect();
+        if(rollTimer)clearInterval(rollTimer);
+    }
+
+    function resetToInitialState() {
+        loadExample();
+    }
+
+    function startDraw() {
+        let ord=getFinalOrder();
+        if(isComplete)return;
+        if(curPrizeIdx>=ord.length){ isComplete=true; updatePrizeHeader(); return; }
+        let p=prizes[ord[curPrizeIdx]];
+        if(curRemain<=0){
+            curPrizeIdx++;
+            if(curPrizeIdx<ord.length) curRemain=prizes[ord[curPrizeIdx]].count;
+            else { isComplete=true; updatePrizeHeader(); }
+            startDraw();
+            return;
+        }
+        let pool=getAvailableForPrize(p.name);
+        if(pool.length===0){
+            curPrizeIdx++;
+            if(curPrizeIdx<ord.length) curRemain=prizes[ord[curPrizeIdx]].count;
+            else { isComplete=true; updatePrizeHeader(); }
+            startDraw();
+            return;
+        }
+        let asg=pool.filter(m=>assignMap.has(m.name)&&assignMap.get(m.name)===p.name);
+        let cand=asg.length?asg:pool;
+        let sel=cand[Math.floor(Math.random()*cand.length)]; if(!sel)return;
+        let names=pool.map(m=>m.name);
+        if(rollTimer)clearInterval(rollTimer);
+        let i=0;
+        rollTimer=setInterval(()=>{ winnerNameDiv.innerHTML=names[i%names.length]||'✨'; i++; },80);
+        setTimeout(()=>{
+            clearInterval(rollTimer); rollTimer=null;
+            sel.win=true; sel.prize=p.name;
+            winnersLog.push({prize:p.name,winners:[sel.name],time:new Date().toLocaleTimeString()});
+            updateMarquee();
+            winnerNameDiv.innerHTML=sel.name;
+            winnerPrizeDiv.innerHTML=`🏅 ${p.name} 🏅`;
+            winnerNameDiv.classList.add('glow');
+            setTimeout(()=>winnerNameDiv.classList.remove('glow'),400);
+            speak(`Congratulations ${sel.name} for winning ${p.name}`);
+            curRemain--;
+            if(curRemain===0){ curPrizeIdx++; if(curPrizeIdx<ord.length) curRemain=prizes[ord[curPrizeIdx]].count; }
+            updatePrizeHeader(); updateStatsUI(); refreshAssignSelect();
+        },1200);
+    }
+
+    function updateMembers() {
+        let names = parseNames(memberTxt.value);
+        members = names.map(n=>({ name:n, win:false, prize:null, bl:blackSet.has(n) }));
+        for(let [k] of assignMap.entries()) if(!members.find(m=>m.name===k)) assignMap.delete(k);
+        resetLottery();
+        renderAssignList();
+        refreshAssignSelect();
+        updateStatsUI();
+    }
+
+    function loadExample() {
+        memberTxt.value = "Emma Liam Noah Olivia Ava Isabella Sophia Lucas";
+        prizes = [
+            { name:"Grand Prize", count:1 },
+            { name:"First Prize", count:1 },
+            { name:"Second Prize", count:2 },
+            { name:"Third Prize", count:3 }
+        ];
+        baseOrder = prizes.map((_,i)=>i);
+        renderPrizeManager();
+        blackSet.clear();
+        updateBlacklistUI();
+        assignMap.clear();
+        renderAssignList();
+        refreshAssignSelect();
+        updateMembers();
+    }
+
+    function updateBlacklistUI() {
+        let arr = [...blackSet];
+        blacklistTxt.value = arr.join('\n');
+        members.forEach(m=>m.bl = blackSet.has(m.name));
+        for(let [k] of assignMap.entries()) if(members.find(m=>m.name===k)?.bl) assignMap.delete(k);
+        resetLottery();
+        refreshAssignSelect();
+        renderAssignList();
+        updateStatsUI();
+    }
+
+    function applyBlacklist() {
+        let names = parseNames(blacklistTxt.value);
+        blackSet.clear();
+        names.forEach(n=>blackSet.add(n));
+        updateBlacklistUI();
+    }
+
+    function clearBlacklistHandler() { blackSet.clear(); updateBlacklistUI(); }
+
+    function assignWinner() {
+        let sel = assignSelect.value;
+        if(!sel || assignSelect.innerHTML.includes('No Available')) return;
+        let prizeRaw = assignPrizeInput.value.trim();
+        if(!prizeRaw) return;
+        let prize = normalizePrizeName(prizeRaw);
+        let prizeObj = prizes.find(p => normalizePrizeName(p.name) === prize);
+        if(!prizeObj) return;
+        let mem = members.find(m=>m.name===sel);
+        if(mem?.bl) return;
+        if(mem?.win) return;
+        if(assignMap.has(sel)) return;
+        let assignedCount = getAssignedCountForPrize(prizeObj.name);
+        if(assignedCount >= prizeObj.count) return;
+        assignMap.set(sel, prizeObj.name);
+        renderAssignList();
+        refreshAssignSelect();
+    }
+
+    function addTempPrize() {
+        let name = prompt("Enter prize name","Special Prize");
+        if(!name) return;
+        let cnt = parseInt(prompt("Enter winners count","1"));
+        if(isNaN(cnt)) cnt=1;
+        prizes.push({name:name,count:Math.max(1,cnt)});
+        baseOrder = prizes.map((_,i)=>i);
+        renderPrizeManager();
+        updatePrizeHeader();
+        updateStatsUI();
+    }
+
+    function generateDefault() {
+        let level = parseInt(document.getElementById('levelCount').value);
+        if(isNaN(level)||level<1) level=4;
+        prizes=[];
+        if(level>=1) prizes.push({name:"Grand Prize",count:1});
+        for(let i=1;i<level;i++) prizes.push({name:`${i}th Prize`,count:1});
+        baseOrder = prizes.map((_,i)=>i);
+        renderPrizeManager();
+        resetLottery();
+    }
+
+    function applyOrderAndReset() {
+        resetToInitialState();
+    }
+
+    function onOrderModeChange() {
+        let ord=getFinalOrder();
+        updatePrizeHeader();
+    }
+
+    let excelInput = document.getElementById('excelFile');
+    document.querySelector('label[for="excelFile"]')?.addEventListener('click',()=>excelInput.click());
+    excelInput.onchange = e=>{ 
+        let f = e.target.files[0]; 
+        if(f){ 
+            let r = new FileReader(); 
+            r.onload = ev => { 
+                let wb = XLSX.read(new Uint8Array(ev.target.result), {type:'array'}); 
+                let sheet = wb.Sheets[wb.SheetNames[0]]; 
+                let rows = XLSX.utils.sheet_to_json(sheet, {header:1}); 
+                let names = []; 
+                rows.forEach(row => { 
+                    if(row[0]){ 
+                        let cell = row[0].toString().trim(); 
+                        if(cell) names.push(cell); 
+                    } 
+                }); 
+                names = [...new Set(names)]; 
+                if(names.length) {
+                    memberTxt.value = names.join('\n'); 
+                    updateMembers(); 
+                }
+                excelInput.value = '';
+            }; 
+            r.readAsArrayBuffer(f); 
+        } 
+    };
+
+    let bgInput = document.getElementById('bgFile'), customBg = document.getElementById('customBg');
+    document.getElementById('selectBgBtn').onclick = ()=>bgInput.click();
+    document.getElementById('applyBgBtn').onclick = ()=>{ let f=bgInput.files[0]; if(f){ let r=new FileReader(); r.onload=e=>{ customBg.style.backgroundImage=`url(${e.target.result})`; customBg.style.display='block'; document.querySelector('.default-bg').style.display='none'; }; r.readAsDataURL(f); } };
+    document.getElementById('resetBgBtn').onclick = ()=>{ customBg.style.display='none'; document.querySelector('.default-bg').style.display='block'; };
+
+    document.getElementById('updateMembers').onclick = updateMembers;
+    document.getElementById('exampleBtn').onclick = loadExample;
+    document.getElementById('clearMembers').onclick = () => { memberTxt.value=""; updateMembers(); };
+    document.getElementById('applyBlacklist').onclick = applyBlacklist;
+    document.getElementById('clearBlacklist').onclick = clearBlacklistHandler;
+    document.getElementById('doAssign').onclick = assignWinner;
+    document.getElementById('addTempPrizeBtn').onclick = addTempPrize;
+    document.getElementById('genDefaultBtn').onclick = generateDefault;
+    document.getElementById('applyOrderBtn').onclick = applyOrderAndReset;
+    drawBtn.onclick = startDraw;
+    voiceToggle.onclick = ()=>{ speech=!speech; voiceToggle.classList.toggle('active',speech); };
+    orderModeRadios.forEach(radio => radio.addEventListener('change', onOrderModeChange));
+
+    function escapeHtml(s) { return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+    document.addEventListener('keydown', e=>{
+        if(e.key==='Enter'||e.key===' ') { e.preventDefault(); drawBtn.click(); }
+    });
+
+    loadExample();
+</script>
+</body>
+</html>
